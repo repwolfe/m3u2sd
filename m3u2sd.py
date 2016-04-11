@@ -4,31 +4,26 @@ Created on 2015-08-11
 @author: robbie
 '''
 from __future__ import division
-import os, sys, shutil
+import io, os, sys, shutil, argparse
 
 EXTENSIONS_PREFIX = "#"
 MUSIC_ROOT = "C:\\Music\\"
 SD_ROOT = "/<microSD1>/"
 
-'''
-@params playlistPath the path to the playlist to copy to the SD card
-		finalRoot the final root location to store the music files on the SD card
-        (optional) saveExtensions save the m3u extension information to the new playlist (default False)
-        (optional) replaceAll boolean if should replace existing mp3 files (default False)
-'''
 if __name__ == "__main__":
-    if len(sys.argv) == 3:
-        playlistPath, finalRoot = sys.argv[1:]
-        saveExtensions = False
-        replaceAll = False
-    elif len(sys.argv) == 4:
-        playlistPath, finalRoot, saveExtensions = sys.argv[1:]
-        replaceAll = False
-    elif len(sys.argv) == 5:
-        playlistPath, finalRoot, saveExtensions, finalRoot = sys.argv[1:]
+    parser = argparse.ArgumentParser(description="Takes an m3u playlist of songs and properly places them on an SD card.")
+    parser.add_argument("playlistPath")
+    parser.add_argument("finalRoot")
+    parser.add_argument("--saveExtensions", action="store_true", help="Save the m3u extension information to the new playlist")
+    parser.add_argument("--replaceAll", action="store_true", help="Replace existing mp3 files")
+    parser.add_argument("--deleteRemoved", action="store_true", help="Delete any music files on the SD card not on the playlist")
 
-    if playlistPath == "" or finalRoot == "":
-        raise Exception("Empty playlistPath or finalRoot")
+    args = parser.parse_args()
+    playlistPath = args.playlistPath
+    finalRoot = args.finalRoot
+    saveExtensions = args.saveExtensions
+    replaceAll = args.replaceAll
+    deleteRemoved = args.deleteRemoved
 
     playlistName = os.path.basename(playlistPath)
     print "Opening playlist: %s" % playlistName
@@ -46,7 +41,7 @@ if __name__ == "__main__":
 
     numLines = numLines - numExtensions + 1    # numLines starts at 0
     lineCount = 0
-    with open(playlistPath, "r") as originalPlaylist, open(newPlaylistPath, "w") as newPlaylist:
+    with io.open(playlistPath, "r", encoding="utf-8-sig") as originalPlaylist, io.open(newPlaylistPath, "w", encoding="utf-8-sig") as newPlaylist:
         for line in originalPlaylist:
             line = line.rstrip("\r\n")
             if line[0] == EXTENSIONS_PREFIX:
@@ -67,10 +62,11 @@ if __name__ == "__main__":
                 finalLocation = os.path.join(finalRoot, songLocation)
                 if replaceAll or not os.path.isfile(finalLocation):
                     # Make the directory if it doesn't exist
-                    dirName = os.path.dirname(finalLocation).decode('utf8')
+                    dirName = os.path.dirname(finalLocation)
                     if not os.path.exists(dirName):
+                        print songLocation
                         os.makedirs(dirName)
-                    shutil.copyfile(line.decode('utf8'), finalLocation.decode('utf8'))
+                    shutil.copyfile(line, finalLocation)
 
                 # Print progress
                 lineCount = lineCount + 1
