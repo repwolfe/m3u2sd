@@ -9,15 +9,14 @@ import io, os, sys, shutil, argparse, ntpath
 FILE_ENCODING = "utf-8-sig"     # Unicode and removes any BOM information at the beginning of the playlist
 SONG_EXTENSIONS = (".mp3", ".m4a")
 EXTENSIONS_PREFIX = "#"
-MUSIC_ROOT = "C:\Music\\"
+MUSIC_ROOT = "C:\\Music\\"
 SD_ROOT = "/<microSD1>/"
 
 def update(args):
-    playlistPath = args.playlistPath
-    finalRoot = args.finalRoot
+    playlistPath = args.playlistPath.replace("\"", "")  # Remove any quotes that may have crept in
+    finalRoot = args.finalRoot.replace("\"", "")
     saveExtensions = args.saveExtensions
     replaceAll = args.replaceAll
-    deleteRemoved = args.deleteRemoved
 
     playlistName = os.path.basename(playlistPath)
     print "Opening playlist: %s" % playlistName
@@ -58,7 +57,6 @@ def update(args):
                     # Make the directory if it doesn't exist
                     dirName = os.path.dirname(finalLocation)
                     if not os.path.exists(dirName):
-                        print songLocation
                         os.makedirs(dirName)
                     shutil.copyfile(line, finalLocation)
 
